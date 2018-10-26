@@ -1,17 +1,39 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <TextInput v-bind="{search}" />
+    <InsultDisplay v-bind="{insult}" />
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import TextInput from "./components/TextInput.vue";
+import InsultDisplay from "./components/InsultDisplay.vue";
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    TextInput,
+    InsultDisplay
+  },
+  data() {
+    return {
+      insult: ""
+    }
+  },
+  methods: {
+    search: function(text) {
+      if (!text || text.length === 0)
+        return;
+
+      console.log('searching')
+
+      fetch ('https://api.datamuse.com/words?rel_rhy=forgetful')
+        .then(response => response.json())
+        .then(json => {
+          console.log(JSON.stringify(json))
+        });
+      
+    }
   }
 }
 </script>
