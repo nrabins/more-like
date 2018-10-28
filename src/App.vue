@@ -1,22 +1,24 @@
 <template>
   <div id="app">
-    <TextInput v-bind="{search}" />
-    <InsultDisplay v-bind="{insult}" />
+    <div class="input">
+      <div>
+        What are you excited about? <input v-model="query" placeholder="Dogs">
+      </div>
+      <button @click="search">Go</button>
+    </div>
+    <div>
+      {{insult}}
+    </div>
   </div>
 </template>
 
 <script>
-import TextInput from "./components/TextInput.vue";
-import InsultDisplay from "./components/InsultDisplay.vue";
 
 export default {
   name: 'app',
-  components: {
-    TextInput,
-    InsultDisplay
-  },
   data() {
     return {
+      query: "",
       insult: ""
     }
   },
@@ -27,11 +29,11 @@ export default {
 
       console.log('searching')
 
-      fetch ('https://api.datamuse.com/words?rel_rhy=forgetful')
-        .then(response => response.json())
-        .then(json => {
-          console.log(JSON.stringify(json))
-        });
+      // fetch ('https://api.datamuse.com/words?rel_rhy=forgetful')
+      //   .then(response => response.json())
+      //   .then(json => {
+      //     console.log(JSON.stringify(json))
+      //   });
       
     }
   }
