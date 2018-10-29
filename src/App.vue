@@ -18,23 +18,59 @@ export default {
   name: 'app',
   data() {
     return {
-      query: "",
-      insult: ""
+      query: "my test",
+      insult: "This is an insult"
     }
   },
   methods: {
-    search: function(text) {
-      if (!text || text.length === 0)
+    search: function() {
+      if (!this.query || this.query.length === 0)
         return;
 
-      console.log('searching')
+      let words = this.query.split(" ");
 
-      // fetch ('https://api.datamuse.com/words?rel_rhy=forgetful')
-      //   .then(response => response.json())
-      //   .then(json => {
-      //     console.log(JSON.stringify(json))
-      //   });
       
+
+      // Get syllables per word
+      var syllablePromises = words.map(word => {
+        return fetch(`https://api.datamuse.com/words?sp=${word}&md=s`)
+          .then(response => response.json())
+          .then(json => {
+            return {
+              word,
+              numSyllables: json[0]['numSyllables']
+            }
+          })
+      })
+
+      let syllableCounts = [];
+      Promise.all(syllablePromises).then(results => {
+        syllableCounts = results;
+        debugger;
+      })
+      debugger;
+
+      var promises = words.map(word => {
+        return fetch(`https://api.datamuse.com/words?rel_rhy=${word}`)
+          .then(response => response.json())
+          .then(json => {
+            return "blah";
+          });
+      })
+
+      Promise.all(promises).then(results => {
+        console.log(results)
+      })
+
+
+      // let rhymes = words.map(word => {
+      //   fetch(`https://api.datamuse.com/words?rel_rhy=${word}`)
+      //     .then(response => response.json())
+      //     .then(json => {
+      //       return "blah";
+      //     });
+      // });
+      //console.log(rhymes)
     }
   }
 }
