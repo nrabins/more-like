@@ -18,7 +18,7 @@ export default {
   name: 'app',
   data() {
     return {
-      query: "my test",
+      query: "",
       insult: "This is an insult"
     }
   },
@@ -29,38 +29,43 @@ export default {
 
       let words = this.query.split(" ");
 
-      
-
-      // Get syllables per word
-      var syllablePromises = words.map(word => {
-        return fetch(`https://api.datamuse.com/words?sp=${word}&md=s`)
-          .then(response => response.json())
-          .then(json => {
-            return {
-              word,
-              numSyllables: json[0]['numSyllables']
-            }
-          })
+      const wordPromises = words.map(word => {
+        return new Promise((resolve, reject) => {
+          fetch(`https://api.datamuse.com/words?sp=${word}&md=s`)
+            .then(response => response.json())
+            .then(json => {
+              resolve({
+                word,
+                numSyllables: json[0]['numSyllables']
+              });
+            })
+        });
       })
 
-      let syllableCounts = [];
-      Promise.all(syllablePromises).then(results => {
-        syllableCounts = results;
-        debugger;
-      })
-      debugger;
-
-      var promises = words.map(word => {
-        return fetch(`https://api.datamuse.com/words?rel_rhy=${word}`)
-          .then(response => response.json())
-          .then(json => {
-            return "blah";
+      Promise.all(wordPromises)
+        .then(syllableCounts => {
+          const rhymePromises = syllableCounts.map(syllableCount => {
+            return new Promise((resolve, reject) => {
+              fetch(`https://api.datamuse.com/words?rel_rhy=${syllableCount.word}`)
+                .then(response => response.json())
+                .then(json => {
+                  resolve(json.filter(potentialRhyme => {
+                    return potentialRhyme['numSyllables'] == syllableCount.numSyllables;
+                  }));
+                })
+            })
           });
-      })
 
-      Promise.all(promises).then(results => {
-        console.log(results)
-      })
+          Promise.all(rhymePromises)
+            .then(potentialInsultWords => {
+              
+              const insultVersion = potentialInsultWords
+                .map(potentialInsultWord => potentialInsultWord[0].word || '???')
+                .join(' ');
+
+              this.insult = `'${this.query}'? More like '${insultVersion}'`;
+            })
+        })
 
 
       // let rhymes = words.map(word => {
