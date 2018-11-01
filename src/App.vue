@@ -1,10 +1,12 @@
 <template>
   <div id="app">
     <div class="input">
-      <div>
-        What are you excited about? <input ref="query" v-model="query" placeholder="Dogs">
-      </div>
-      <button @click="search">Go</button>
+      <form @submit.prevent="handleSubmit">
+        <label>
+          What are you excited about? <input ref="query" type="text" v-model="query" />
+        </label>
+        <button type="submit">Go</button>
+      </form>
     </div>
     <div>
       {{insult}}
@@ -26,7 +28,7 @@ export default {
     this.$refs.query.focus();
   },
   methods: {
-    search: function() {
+    handleSubmit: function() {
       if (!this.query || this.query.length === 0)
         return;
 
