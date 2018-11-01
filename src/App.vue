@@ -2,7 +2,7 @@
   <div id="app">
     <div class="input">
       <div>
-        What are you excited about? <input v-model="query" placeholder="Dogs">
+        What are you excited about? <input ref="query" v-model="query" placeholder="Dogs">
       </div>
       <button @click="search">Go</button>
     </div>
@@ -19,8 +19,11 @@ export default {
   data() {
     return {
       query: "",
-      insult: "This is an insult"
+      insult: ""
     }
+  },
+  mounted() {
+    this.$refs.query.focus();
   },
   methods: {
     search: function() {
