@@ -5,11 +5,12 @@
         <form @submit.prevent="handleSubmit">
           <label>
             <span class="excited-label">I'm excited about...</span>
-            <input class="excited-input" ref="query" type="text" v-model="query" />
+            <input class="excited-input" ref="query" type="text" :placeholder="placeholder" v-model="query" v-on:keyup="onInputChange"/>
           </label>
           <!-- <button type="submit">Go</button> -->
         </form>
       </div>
+      <!-- <div class="loading" v-show="isLoading">Loading</div> -->
       <div class="output">
         {{insult}}
       </div>
@@ -24,27 +25,34 @@ export default {
   data() {
     return {
       query: "",
-      insult: ""
+      insult: "",
+      placeholder: ""
     }
   },
   mounted() {
     this.$refs.query.focus();
+    const placeholderOptions = ["dogs", "cats", "singing in the rain", "my jammies", "hats", "pokemon go", "absolutely nothing", "making bad websites", "falling in love"];
+    this.placeholder = placeholderOptions[Math.floor(Math.random() * placeholderOptions.length)];
   },
   methods: {
-    handleSubmit: function() {
+    handleSubmit() {
       if (!this.query || this.query.length === 0)
         return;
+        
+      function rfc3986EncodeURIComponent (str) {  
+        return encodeURIComponent(str).replace(/[!'()*]/g, escape);  
+      }
 
       let words = this.query.split(" ");
-
       const wordPromises = words.map(word => {
         return new Promise(resolve => {
-          fetch(`https://api.datamuse.com/words?sp=${word}&md=s`)
+          var encodedWord = rfc3986EncodeURIComponent(word);
+          fetch(`https://api.datamuse.com/words?sp=${encodedWord}&md=s`)
             .then(response => response.json())
             .then(json => {
               resolve({
-                word,
-                numSyllables: json[0]['numSyllables']
+                sanitizedWord: json[0]['word'],
+                numSyllables: json[0]['numSyllables'],
               });
             })
         });
@@ -54,12 +62,26 @@ export default {
         .then(syllableCounts => {
           const rhymePromises = syllableCounts.map(syllableCount => {
             return new Promise(resolve => {
-              fetch(`https://api.datamuse.com/words?rel_rhy=${syllableCount.word}`)
+              fetch(`https://api.datamuse.com/words?rel_rhy=${syllableCount.sanitizedWord}`)
                 .then(response => response.json())
                 .then(json => {
-                  resolve(json.filter(potentialRhyme => {
-                    return potentialRhyme['numSyllables'] == syllableCount.numSyllables;
-                  }));
+                  let rhymes = json;
+                  rhymes.sort((a, b) => {
+                    // sort by syllabic delta, then weight
+                    const aDistance = Math.abs(syllableCount.numSyllables - a.numSyllables);
+                    const bDistance = Math.abs(syllableCount.numSyllables - b.numSyllables);
+                    if (aDistance != bDistance) {
+                      // the closer the syllable count, the better
+                      return aDistance - bDistance;
+                    } else if (a.score && b.score) {
+                      // otherwise return the best rhyme
+                      return b.score - a.score;
+                    } else {
+                      // if no score, return the shorter word
+                      return a.word.length - b.word.length;
+                    }
+                  });
+                  return resolve(rhymes)
                 })
             })
           });
@@ -74,6 +96,10 @@ export default {
               this.insult = `'${this.query}'? More like '${insultVersion}'`;
             })
         });   
+    },
+    onInputChange() {
+      if (this.query.length == 0)
+        this.insult = "";
     }
   }
 }
@@ -98,9 +124,9 @@ html, body {
   width: 100%;
   overflow: hidden;
   color: #2c3e50;
-  background: radial-gradient(farthest-corner at top left, #afff7c, transparent), 
-              radial-gradient(farthest-corner at top right, #e6c8a1, transparent), 
-              radial-gradient(farthest-side at bottom, rgb(241, 233, 118), transparent);
+  background: radial-gradient(farthest-corner at top left, #ff7ccb, transparent), 
+              radial-gradient(farthest-corner at top right, #a1cde6, transparent), 
+              radial-gradient(farthest-side at bottom, rgb(251, 241, 99), transparent);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -118,9 +144,8 @@ html, body {
 }
 
 .focus {
-  background-color: antiquewhite;
+  background-color: #ffffffa8;
   padding: 100px;
-  border: 1px #d0bd8a solid;
   border-radius: 4px;
   box-shadow: 0px 0px 20px 0px #88888885;
   display: flex;
@@ -131,7 +156,7 @@ html, body {
 
 .focus input {
   border: none;
-  border-bottom: 2px solid black;
+  border-bottom: 1px solid black;
   background: none;
   margin: 0 10px;
 }
@@ -142,6 +167,7 @@ html, body {
 
 .output {
   padding: 40px;
+  min-height: 30px;
 }
 
 </style>
