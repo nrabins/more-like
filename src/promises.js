@@ -1,5 +1,3 @@
-
-
 function getSyllables(words) {
     return words.map(word => {
         return new Promise((resolve, reject) => {
